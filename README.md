@@ -1,12 +1,11 @@
-Copier template for a CloudFormation Custom Resource Provider in Python
-==============================================================
+Copier template for a CloudFormation Custom Resource Provider in Golang
+======================================================================
 This [copier](https://copier.readthedocs.io/) template  allows you to  create a complete custom resource provider in minutes!
 
 Out-of-the-box features include:
 - create the source for a custom cloudformation resource provider
 - support for semantic versioning your provider using [git-release-tag](https://github.com/binxio/git-release-tag)
 - distribute the provider to buckets in all AWS regions in the world
-- re-recordable unit tests using [botocore stubber recorder](https://pypi.org/project/botocore-stubber-recorder/)
 - deployable [AWS Codebuild](https://aws.amazon.com/codebuild/) pipeline
 
 ## getting started!
@@ -16,25 +15,24 @@ because it does not yet exist. To create the project, type:
 ```shell
 pip install copier
 copier https://github.com/binxio/cloudformation-custom-provider-template /tmp/cfn-app-runner-custom-domain-provider
-
 🎤 the name of your custom resource type?
-   AppRunnerCustomDomain
-🎤 The name of your resource provider project?
-   cfn-app-runner-custom-domain-provider
-🎤 The name of your Python module?
-   cfn_app_runner_custom_domain_provider
+   ContainerImage
+🎤 The name of your resource provider?
+   cfn-container-image-provider
 🎤 a short description for the custom provider?
-   manages app runner custom domains 
-🎤 Python version to use
-   3.9
+   manages container images
+🎤 golang version to use
+   1.20
 🎤 Your full name?
    Mark van Holsteijn
 🎤 Your email address?
-   mark.vanholsteijn@xebia.com
+   mark@binx.io
+🎤 the go module name
+   github.com/binxio/cfn-container-image-provider
 🎤 the URL to git source repository?
-   https://github.com/binxio/cfn-app-runner-custom-domain-provider
-🎤 the AWS profile name
-   integration-test
+   https://github.com/binxio/cfn-container-image-provider.git
+🎤 the golang executable name
+   cfn-container-image-provider
 🎤 the AWS region name
    eu-central-1
 🎤 prefix for the S3 bucket name to store the lambda zipfiles?
@@ -42,13 +40,34 @@ copier https://github.com/binxio/cloudformation-custom-provider-template /tmp/cf
 🎤 Access to lambda zip files?
    public
 
-> Running task 1 of 1: [[ ! -d .git ]] &&  ( git init &&  git add . &&  git commit -m 'initial import'  && git tag 0.0.0) || exit 0
-Initialized empty Git repository in /tmp/cfn-app-runner-custom-domain-provider/.git/
-[main (root-commit) b2ce863] initial import
- 21 files changed, 619 insertions(+)
-...
+Copying from template version 0.0.0.post28.dev0+dfac895
+ identical  .
+    create  Makefile.mk
+    create  .gitignore
+    create  go.mod
+    create  .buildspec.yaml
+  conflict  .copier-answers.yml
+ overwrite  .copier-answers.yml
+    create  .dockerignore
+    create  Dockerfile.lambda
+    create  doc
+    create  doc/ContainerImage.md
+    create  .release
+    create  Makefile
+    create  cloudformation
+    create  cloudformation/cicd-pipeline.yaml
+    create  cloudformation/cfn-container-image-provider.yaml
+    create  cloudformation/demo.yaml
+    create  main.go
+
+ > Running task 1 of 1: [ ! -f go.sum ] &&  (go mod download || echo "WARNING: failed to run go mod">&2); [ ! -d .git ] && ( git init && git add . && git commit -m 'initial import' && git tag 0.0.0) || exit 0
+Initialized empty Git repository in /private/tmp/y/.git/
+[main (root-commit) c97b9e2] initial import
+ 15 files changed, 529 insertions(+)
+... 
+
 ````
-This creates a project with a working custom provider for the resource `AppRunnerCustomDomain`. Change to 
+This creates a project with a working custom provider for the resource `ContainerImage`. Change to 
 the directory and type `make deploy-provider` and `make demo`. Your provider will be up-and-running
 in less than 5 minutes!
 
@@ -56,67 +75,55 @@ in less than 5 minutes!
 When you type `make help`, you will get a list of all of available actions.
 
 ```text
+
 build                -  build the lambda zip file
 fmt                  -  formats the source code
-test                 -  run python unit tests
-test-record          -  run python unit tests, while recording the boto3 calls
+test                 -  run unit tests
 test-templates       -  validate CloudFormation templates
-
 deploy               -  AWS lambda zipfile to bucket
 deploy-all-regions   -  AWS lambda zipfiles to all regional buckets
 undeploy-all-regions -  deletes AWS lambda zipfile of this release from all buckets in all regions
-
 deploy-provider      -  deploys the custom provider
 delete-provider      -  deletes the custom provider
-
 deploy-pipeline      -  deploys the CI/CD deployment pipeline
 delete-pipeline      -  deletes the CI/CD deployment pipeline
-
 deploy-demo          -  deploys the demo stack
 delete-demo          -  deletes the demo stack
-
 tag-patch-release    -  create a tag for a new patch release
 tag-minor-release    -  create a tag for a new minor release
 tag-major-release    -  create a tag for new major release
+show-version         -  shows the current version of the workspace
+help                 -  Show this help.
 ```
 
 ### run the unit tests
 To run the unit tests, type:
 
 ```shell
-$ pipenv install -d
 $ make test
 ```
-
-The unit test will test the scaffold implementation generated by the [botocore stubber recorder](https://pypi.org/project/botocore-stubber-recorder/).
-To create unit tests for your resource, edit the source code in `./tests/`. To implement your custom
-resource, edit the source code under `./src/`.
-
-### re-recordable unit tests
-Once you have your custom resource provider, it undoubtedly does some AWS API calls.
-The [botocore stubber recorder](https://pypi.org/project/botocore-stubber-recorder/) will
-allow you to create unit test by running the test against a real account. The tests
-will record the actual calls and generate the stubs. To run your unit tests, type:
-
-```shell
-$ make test-record
-```
-This will run the unit tests and record the AWS calls. To run the unit tests with the
-newly created stubs, type:
-
-```shell
-$ make test
-```
-The integration tests are run against the AWS profile and region you specified.
 
 ### Deploy the zip file to the bucket
 To copy the zip file with the source code of the AWS Lambda of the custom resource provider, type:
 ```shell
-$ aws s3 mb s3://<bucket-prefix>-<bucket-region>
+$ BUCKET=<bucket-prefix>-<bucket-region>
+$ aws s3 mb s3://$BUCKET
+$ aws s3api put-bucket-ownership-controls \
+    --bucket $BUCKET --ownership-controls \
+    'Rules=[{ObjectOwnership=BucketOwnerPreferred}]'
 ```
 As you can see, the zipfile will be copied to a bucket name which consists of the prefix
 and the region name.  This allows the zipfile to be made available for use in
 all regions.
+
+If you want to allow public access to the bucket, type:
+```shell
+
+$  aws s3api put-public-access-block \
+   --bucket $BUCKET  \
+   --public-access-block-configuration \
+   "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"
+```
 
 ### Deploy the custom resource provider into the account
 Now the zip file is available, you deploy the custom resource provider, by typing:

@@ -1,3 +1,4 @@
+---
 # questions
 resource_name:
   type: str
@@ -13,60 +14,38 @@ resource_type_name:
   default: "Custom::{{resource_name}}"
   when: false
   validator: >-
-    {% if resource_type_name != ("Custom::" + resource_name) %} 
+    {% if resource_type_name != ("Custom::" + resource_name) %}
     The type name must be Custom::{{resource_name}}.
-    {% endif %}  
-
-resource_file_name:
-  type: str
-  help: the python custom resource module base filename. just press return.
-  when: false
-  default: >-
-    {{ resource_name |
-    regex_replace('(.)([A-Z][a-z]+)', '\\1_\\2') |
-    regex_replace('([a-z0-9])([A-Z])', '\\1_\\2') | lower }}
-  validator: |
-    {% if not (resource_file_name | regex_search('[a-z0-9_]_')) %}
-    the filename must only consist of lowercase letters, digits and underscore.
     {% endif %}
+
 
 project_name:
   type: str
-  help: The name of your resource provider project?
+  help: The name of your resource provider?
   default: >-
-    cfn-{{ resource_file_name | regex_replace('_', '-') }}-provider
+    cfn-{{ resource_name |
+    regex_replace('(.)([A-Z][a-z]+)', '\\1-\\2') |
+    regex_replace('([a-z0-9])([A-Z])', '\\1-\\2') | lower }}-provider
   validator: >-
     {% if not (project_name|regex_search('^[a-z][a-z0-9-]+$')) %}
     must be all lowercase letters or digits with optional dashes.
-    {% endif %}
-
-module_name:
-  type: str
-  help: The name of your Python module?
-  default: >-
-    {{ project_name | regex_replace('-', '_') }}
-  validator: >-
-    {% if not (module_name| regex_search('^[a-z][a-z0-9_]+$')) %}
-     must be all lowercase letters or digits with optional underscore.
     {% endif %}
 
 description:
   type: str
   help: a short description for the custom provider?
   default: >-
-    manages {{resource_name | 
+    manages {{resource_name |
     regex_replace('(.)([A-Z][a-z]+)', '\\1 \\2') |
     regex_replace('([a-z0-9])([A-Z])', '\\1 \\2') |
-    lower}}s 
+    lower}}s
 
-python_version:
+golang_version:
   type: str
-  help: Python version to use
-  default: 3.9
+  help: golang version to use
+  default: '1.20'
   choices:
-    - 3.9
-    - 3.8
-    - 3.7
+    - '1.20'
 
 author:
   type: str
@@ -84,20 +63,24 @@ author_email:
     Must be an email address.
     {% endif %}
 
+
+go_module_name:
+  type: str
+  help: the go module name
+  default: >-
+    github.com/{{ author_email | regex_replace('[^@]*@', '') | regex_replace('\\.', '-')}}/{{project_name}}
+
 url:
   type: str
   help: the URL to git source repository?
   default: >-
-    https://github.com/{{ author_email | regex_replace('[^@]*@', '') | regex_replace('\\.', '-')}}/{{project_name}}
+    https:/{{go_module_name}}.git
 
-aws_profile:
+executable_name:
   type: str
-  help: the AWS profile name
-  default: default
-  validator: >-
-    {% if not aws_profile %}
-    aws profile name must be specified
-    {% endif %} 
+  help: the golang executable name
+  default: >-
+    {{ url | regex_replace('[^/]*/', '') | regex_replace('\\.git$','') }}
 
 aws_region:
   type: str
@@ -124,15 +107,14 @@ s3_object_acl:
     public: public-read
 
 _skip_if_exists:
-    - tests/**
-    - 'src/{{module_name}}/**'
-    - 'cloudformation/demo*'
-    - 'cloudformation/{{project_name}}.yaml'
-    - README.md
-    - setup.cfg
-    - .release
-    - Pipfile
-    - pyproject.toml
+  - tests/**
+  - 'src/{{module_name}}/**'
+  - 'cloudformation/demo*'
+  - 'cloudformation/{{project_name}}.yaml'
+  - README.md
+  - .release
+  - '*.go'
+  - 'go.*'
 
 _exclude:
   - copier.yaml
@@ -143,14 +125,16 @@ _exclude:
   - .idea
   - build
   - dist
-  - venv
+  - bootstrap
   - README.md
 
 _tasks:
   # do a git init
-  - >- 
-    [[ ! -d .git ]] && 
-    ( git init && 
-    git add . && 
-    git commit -m 'initial import' 
+  - >-
+    [ ! -f go.sum ] && 
+    (go mod download || echo "WARNING: failed to run go mod">&2);
+    [ ! -d .git ] &&
+    ( git init &&
+    git add . &&
+    git commit -m 'initial import'
     && git tag 0.0.0) || exit 0

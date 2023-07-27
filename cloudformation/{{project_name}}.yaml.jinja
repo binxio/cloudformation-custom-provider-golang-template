@@ -13,11 +13,11 @@ Resources:
         S3Bucket: !Sub '${S3BucketPrefix}-${AWS::Region}'
         S3Key: 'lambdas/{{project_name}}-0.0.0.zip'
       FunctionName: '{{project_name}}'
-      Handler: '{{module_name}}.handler'
+      Handler: 'bootstrap'
       MemorySize: 128
       Timeout: 900
       Role: !GetAtt 'LambdaRole.Arn'
-      Runtime: 'python{{python_version}}'
+      Runtime: 'provided.al2'
 
   LambdaRole:
     Type: AWS::IAM::Role

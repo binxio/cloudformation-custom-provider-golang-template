@@ -10,20 +10,17 @@ VERSION := $(shell git describe  --tags --dirty)
 build: target/$(NAME)-$(VERSION).zip		## build the lambda zip file
 
 fmt:	## formats the source code
-	black src/ tests/
+	go fmt ./...
 
-test:	## run python unit tests
-	pipenv run tox
-
-test-record: ## run python unit tests, while recording the boto3 calls
-	RECORD_UNITTEST_STUBS=true pipenv run tox
+test:	## run unit tests
+	go test ./...
 
 test-templates:     ## validate CloudFormation templates
 	for n in ./cloudformation/*.yaml ; do aws cloudformation validate-template --template-body file://$$n ; done
 
 deploy: target/$(NAME)-$(VERSION).zip@$(S3_BUCKET_PREFIX)	## AWS lambda zipfile to bucket
 
-target/$(NAME)-$(VERSION).zip: src/ pyproject.toml setup.cfg
+target/$(NAME)-$(VERSION).zip: *.go go.*
 	mkdir -p target/content
 	docker build --build-arg ZIPFILE=$(NAME)-$(VERSION).zip -t $(NAME)-lambda:$(VERSION) -f Dockerfile.lambda . && \
 		ID=$$(docker create $(NAME)-lambda:$(VERSION) /bin/true) && \
@@ -59,9 +56,6 @@ undeploy-all-regions:	## deletes AWS lambda zipfile of this release from all buc
                         s3://$(S3_BUCKET_PREFIX)-$$REGION/lambdas/$(NAME)-$(VERSION).zip; \
         done
 	rm -f target/$(NAME)-$(VERSION).zip@$(S3_BUCKET_PREFIX)
-
-Pipfile.lock: Pipfile setup.cfg pyproject.toml
-	pipenv update
 
 deploy-provider: target/$(NAME)-$(VERSION).zip@$(S3_BUCKET_PREFIX)  ## deploys the custom provider
 	sed -i -e 's^lambdas/$(NAME)-[0-9]*\.[0-9]*\.[0-9]*[^\.]*\.'^lambdas/$(NAME)-$(VERSION).^g cloudformation/$(NAME).yaml
