@@ -1,5 +1,7 @@
 S3_BUCKET=$(S3_BUCKET_PREFIX)-$(AWS_REGION)
+ifndef S3_OBJECT_ACL
 S3_OBJECT_ACL=private
+endif
 ALL_REGIONS=$(shell aws --region $(AWS_REGION) \
 		ec2 describe-regions 		\
 		--query 'join(`\n`, Regions[?RegionName != `$(AWS_REGION)`].RegionName)' \

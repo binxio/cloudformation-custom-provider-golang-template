@@ -61,7 +61,7 @@ Copying from template version 0.0.0.post28.dev0+dfac895
     create  main.go
 
  > Running task 1 of 1: [ ! -f go.sum ] &&  (go mod download || echo "WARNING: failed to run go mod">&2); [ ! -d .git ] && ( git init && git add . && git commit -m 'initial import' && git tag 0.0.0) || exit 0
-Initialized empty Git repository in /private/tmp/y/.git/
+Initialized empty Git repository in ...
 [main (root-commit) c97b9e2] initial import
  15 files changed, 529 insertions(+)
 ... 
@@ -75,23 +75,29 @@ in less than 5 minutes!
 When you type `make help`, you will get a list of all of available actions.
 
 ```text
-
 build                -  build the lambda zip file
 fmt                  -  formats the source code
+
 test                 -  run unit tests
 test-templates       -  validate CloudFormation templates
+
 deploy               -  AWS lambda zipfile to bucket
 deploy-all-regions   -  AWS lambda zipfiles to all regional buckets
 undeploy-all-regions -  deletes AWS lambda zipfile of this release from all buckets in all regions
+
 deploy-provider      -  deploys the custom provider
 delete-provider      -  deletes the custom provider
+
 deploy-pipeline      -  deploys the CI/CD deployment pipeline
 delete-pipeline      -  deletes the CI/CD deployment pipeline
+
 deploy-demo          -  deploys the demo stack
 delete-demo          -  deletes the demo stack
+
 tag-patch-release    -  create a tag for a new patch release
 tag-minor-release    -  create a tag for a new minor release
 tag-major-release    -  create a tag for new major release
+
 show-version         -  shows the current version of the workspace
 help                 -  Show this help.
 ```
@@ -106,9 +112,9 @@ $ make test
 ### Deploy the zip file to the bucket
 To copy the zip file with the source code of the AWS Lambda of the custom resource provider, type:
 ```shell
-$ BUCKET=<bucket-prefix>-<bucket-region>
-$ aws s3 mb s3://$BUCKET
-$ aws s3api put-bucket-ownership-controls \
+BUCKET=<bucket-prefix>-<bucket-region>
+aws s3 mb s3://$BUCKET
+aws s3api put-bucket-ownership-controls \
     --bucket $BUCKET --ownership-controls \
     'Rules=[{ObjectOwnership=BucketOwnerPreferred}]'
 ```
@@ -118,8 +124,7 @@ all regions.
 
 If you want to allow public access to the bucket, type:
 ```shell
-
-$  aws s3api put-public-access-block \
+aws s3api put-public-access-block \
    --bucket $BUCKET  \
    --public-access-block-configuration \
    "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"

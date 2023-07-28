@@ -1,0 +1,11 @@
+package main
+
+import (
+	"github.com/aws/aws-lambda-go/cfn"
+	"github.com/aws/aws-lambda-go/lambda"
+	"{{go_module_name}}/pkg/resources/{{resource_package_name}}"
+)
+
+func main() {
+	lambda.Start(cfn.LambdaWrap({{resource_package_name}}.Handler))
+}

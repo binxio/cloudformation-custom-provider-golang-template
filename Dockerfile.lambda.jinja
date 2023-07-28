@@ -3,8 +3,8 @@ WORKDIR /lambda
 
 RUN apt-get update && apt-get install -y zip
 
-COPY *.go go.* ./
-RUN go build -tags lambda.norpc -o bootstrap
+COPY . ./
+RUN go build -tags lambda.norpc -o bootstrap .
 RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bootstrap -tags lambda.norpc .
 
 ARG ZIPFILE=lambda.zip

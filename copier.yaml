@@ -18,6 +18,18 @@ resource_type_name:
     The type name must be Custom::{{resource_name}}.
     {% endif %}
 
+resource_package_name:
+  type: str
+  help: The name of your resource file?
+  default: >-
+    {{ resource_name |
+    regex_replace('(.)([A-Z][a-z]+)', '\\1_\\2') |
+    regex_replace('([a-z0-9])([A-Z])', '\\1_\\2') | lower }}
+  validator: >-
+    {% if not (resource_package_name|regex_search('^[a-z][a-z0-9_]+$')) %}
+    must be all lowercase letters or digits or underscores.
+    {% endif %}
+
 
 project_name:
   type: str
@@ -79,6 +91,7 @@ url:
 executable_name:
   type: str
   help: the golang executable name
+  when: false
   default: >-
     {{ url | regex_replace('[^/]*/', '') | regex_replace('\\.git$','') }}
 
