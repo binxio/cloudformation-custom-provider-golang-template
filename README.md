@@ -14,7 +14,7 @@ because it does not yet exist. To create the project, type:
 
 ```shell
 pip install copier
-copier https://github.com/binxio/cloudformation-custom-provider-template /tmp/cfn-app-runner-custom-domain-provider
+copier https://github.com/binxio/cloudformation-custom-provider-golang-template /tmp/cfn-container-image-provider
 🎤 the name of your custom resource type?
    ContainerImage
 🎤 The name of your resource provider?
