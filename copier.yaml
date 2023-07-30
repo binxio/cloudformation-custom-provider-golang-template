@@ -145,7 +145,7 @@ _tasks:
   # do a git init
   - >-
     [ ! -f go.sum ] && 
-    (go mod download || echo "WARNING: failed to run go mod">&2);
+    (go mod download && go get {{go_module_name}} || echo "WARNING: failed to run go get">&2);
     [ ! -d .git ] &&
     ( git init &&
     git add . &&
