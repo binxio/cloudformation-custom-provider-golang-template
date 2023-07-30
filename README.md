@@ -13,8 +13,11 @@ Let's say you want to create a custom resource for a Custom Domain of an AWS App
 because it does not yet exist. To create the project, type:
 
 ```shell
-pip install copier
-copier https://github.com/binxio/cloudformation-custom-provider-golang-template /tmp/cfn-container-image-provider
+pip install 'copier>=8.0.0'
+copier copy --trust \
+   https://github.com/binxio/cloudformation-custom-provider-golang-template \
+   /tmp/cfn-container-image-provider
+
 🎤 the name of your custom resource type?
    ContainerImage
 🎤 The name of your resource provider?
@@ -64,7 +67,6 @@ Copying from template version 0.0.0.post28.dev0+dfac895
 Initialized empty Git repository in ...
 [main (root-commit) c97b9e2] initial import
  15 files changed, 529 insertions(+)
-... 
 
 ````
 This creates a project with a working custom provider for the resource `ContainerImage`. Change to 
